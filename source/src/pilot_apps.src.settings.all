@@ -77,6 +77,9 @@ sources = {
 		"MSA_design", # /* Justin Ashworth, documentation pending further testing, test/integration/tests/sequence_profile_constraints */
 		#"jd2_parser_DNAInt", # /* Justin Ashworth, doc/apps/pilot/jd2_parser_DNAInt.dox, */
 	],
+	"pilot/aseamann" : [
+		"bootcamp"
+	],
 	"pilot/awatkins" : [
 		#"aggregate_coarse_rna_vdw",
 		"aramid_folding",
