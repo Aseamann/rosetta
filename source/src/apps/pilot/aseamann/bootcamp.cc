@@ -20,6 +20,13 @@
 # include <core/scoring/Energies.hh> // Showing energies from scoring
 # include <numeric/random/random.hh>  // For random number
 # include <protocols/moves/MonteCarlo.hh>  // For montecarlo
+# include <protocols/moves/PyMOLMover.hh>  // PyMolObserver
+# include <core/pack/task/PackerTask.hh>  // for setting up PackerTask
+# include <core/pack/task/TaskFactory.hh>  // for setting up TaskFactory
+# include <core/pack/pack_rotamers.hh>  // for packing
+# include <core/kinematics/MoveMap.hh> // for minimizing
+# include <core/optimization/AtomTreeMinimizer.hh> // for minimizing
+# include <core/optimization/MinimizerOptions.hh> // for minimizing
 
 int main( int argc, char ** argv ) {
     devel::init( argc, argv );
@@ -48,6 +55,17 @@ int main( int argc, char ** argv ) {
     core::Real temp = 1.0;
     protocols::moves::MonteCarloOP mc ( new protocols::moves::MonteCarlo( *mypose, *sfxn, temp ) );
 
+    // Setup pymol observer
+    protocols::moves::PyMOLObserverOP the_observer = protocols::moves::AddPyMOLObserver( *mypose, true, 0 );
+
+    // Setup minimizer
+    core::pose::Pose copy_pose;
+    core::kinematics::MoveMap mm;
+    mm.set_bb( true );
+    mm.set_chi( true );
+    core::optimization::MinimizerOptions min_opts( "lbfgs_armijo_atol", 0.01, true );
+    core::optimization::AtomTreeMinimizer atm;
+
     int loop_count = 10;
     for( int i = 0 ; i < loop_count; i++ ) {
         // Determine random residue
@@ -63,7 +81,21 @@ int main( int argc, char ** argv ) {
         mypose->set_phi( randres, orig_phi + pert1 );
         mypose->set_psi( randres, orig_psi + pert2 );
 
+        // Setup PackerTask to run after move phi/psi
+        core::pack::task::PackerTaskOP repack_task = core::pack::task::TaskFactory::create_packer_task( *mypose );
+        repack_task->restrict_to_repacking();
+        core::pack::pack_rotamers( *mypose, *sfxn, repack_task );
+
+        // Run minimizer
+        copy_pose = *mypose;
+        atm.run( copy_pose, mm, *sfxn, min_opts );
+        *mypose = copy_pose;
+
+        // apply monte carlo
         mc->boltzmann( *mypose );
+
+        // Call pymol observer
+        the_observer->pymol().apply( *mypose );
     }
 
     // Check pose
