@@ -20,7 +20,7 @@
 #include <test/core/init_util.hh>
 
 // Project Headers
-
+#include <protocols/bootcamp/Queue.hh>
 
 // Core Headers
 #include <core/pose/Pose.hh>
@@ -28,6 +28,7 @@
 
 // Utility, etc Headers
 #include <basic/Tracer.hh>
+#include <string>
 
 static basic::Tracer TR("QueueTests");
 
@@ -39,14 +40,12 @@ public:
 
 	void setUp() {
 		core_init();
-
+		queue_ = protocols::bootcamp::Queue();
 	}
 
 	void tearDown() {
 
 	}
-
-
 
 	void test_first() {
 		TS_TRACE( "Running my first unit test!" );
@@ -54,5 +53,41 @@ public:
 
 	}
 
+	void test_enqueue() {
+		// Check if the first value adds
+		std::string string1 = "Testing 1";
+		queue_.enqueue(string1);
+		TS_ASSERT_EQUALS(queue_.size(), 1);
+		// Check if the second value adds
+		std::string string2 = "Testing 2";
+		queue_.enqueue(string2);
+		TS_ASSERT_EQUALS(queue_.size(), 2);
+	}
+
+	void test_dequeue() {
+		// Setup queue
+		std::string string1 = "Testing 1";
+		queue_.enqueue(string1);
+		queue_.enqueue(string1);
+		TS_ASSERT_EQUALS(queue_.size(), 2);
+		// Check if we can dequeue the previously added strings
+		queue_.dequeue();
+		TS_ASSERT_EQUALS(queue_.size(), 1);
+	}
+
+	void test_is_empty() {
+		// Setup queue
+		std::string string1 = "Testing 1";
+		queue_.enqueue(string1);
+		// Check if is_empty is false
+		TS_ASSERT(!queue_.is_empty());
+		// Dequeue the single item
+		queue_.dequeue();
+		TS_ASSERT(queue_.is_empty());
+	}
+
+private:
+	
+	protocols::bootcamp::Queue queue_;
 
 };
