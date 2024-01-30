@@ -8,6 +8,7 @@
 // (c) addressed to University of Washington UW TechTransfer, email: license@u.washington.edu.
 
 # include <iostream>
+# include <basic/Tracer.hh>  // Output
 # include <basic/options/option.hh>
 # include <utility/vector1.hh>
 # include <basic/options/keys/in.OptionKeys.gen.hh>
@@ -28,13 +29,16 @@
 # include <core/optimization/AtomTreeMinimizer.hh> // for minimizing
 # include <core/optimization/MinimizerOptions.hh> // for minimizing
 
+// Setup tracer cout
+static basic::Tracer TR( "apps.pilot.aseamann" );
+
 int main( int argc, char ** argv ) {
     devel::init( argc, argv );
     utility::vector1< std::string > filenames = basic::options::option[ basic::options::OptionKeys::in::file::s ].value();
     if ( filenames.size() > 0 ) {
-    std::cout << "You entered: " << filenames[ 1 ] << " as the PDB file to be read" << std::endl;
+    TR << "You entered: " << filenames[ 1 ] << " as the PDB file to be read" << std::endl;
     } else {
-        std::cout << "You didn’t provide a PDB file with the -in::file::s option" << std::endl;
+        TR << "You didn’t provide a PDB file with the -in::file::s option" << std::endl;
         return 1;
     }
 
@@ -100,7 +104,7 @@ int main( int argc, char ** argv ) {
 
     // Check pose
     core::Real score2 = sfxn->score( *mypose );
-    std::cout << "Updated Score: " << score2 << std::endl;
+    TR << "Updated Score: " << score2 << std::endl;
 
     return 0;
 }
