@@ -12,6 +12,12 @@
 # include <utility/vector1.hh>
 # include <basic/options/keys/in.OptionKeys.gen.hh>
 # include <devel/init.hh>
+# include <core/import_pose/import_pose.hh>  // importing pdbs
+# include <utility/pointer/owning_ptr.hh>  // Needed for every time a smart pointer is used
+# include <core/pose/Pose.hh>  // Needed for every time a smart pointer is used
+# include <core/scoring/ScoreFunctionFactory.hh>  // Needed for scoring
+# include <core/scoring/ScoreFunction.hh> // Needed for scoring 
+# include <core/scoring/Energies.hh> // Showing energies from scoring
 
 int main( int argc, char ** argv ) {
     devel::init( argc, argv );
@@ -22,5 +28,17 @@ int main( int argc, char ** argv ) {
         std::cout << "You didn’t provide a PDB file with the -in::file::s option" << std::endl;
         return 1;
     }
+
+    // Read in pdb
+    core::pose::PoseOP mypose = core::import_pose::pose_from_file( filenames[1] );
+
+    // Set score funciton
+    core::scoring::ScoreFunctionOP sfxn = core::scoring::get_score_function();
+    core::Real score = sfxn->score( *mypose );
+
+    // Print score
+    // mypose->energies().show( std::cout );
+    std::cout << "Score Results is: " << score << std::endl;
+
     return 0;
 }
