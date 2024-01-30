@@ -7,7 +7,11 @@
 // (c) For more information, see http://www.rosettacommons.org. Questions about this can be
 // (c) addressed to University of Washington UW TechTransfer, email: license@u.washington.edu.
 
+// Basic includes
 # include <iostream>
+#include <numeric>
+
+// Rosetta includes
 # include <basic/Tracer.hh>  // Output
 # include <basic/options/option.hh>
 # include <utility/vector1.hh>
@@ -70,7 +74,11 @@ int main( int argc, char ** argv ) {
     core::optimization::MinimizerOptions min_opts( "lbfgs_armijo_atol", 0.01, true );
     core::optimization::AtomTreeMinimizer atm;
 
-    int loop_count = 10;
+    // Data collection for acceptance rate
+    core::Size accepted_num = 0;
+    utility::vector1< core::Real > score_vec{};
+
+    int loop_count = 100;
     for( int i = 0 ; i < loop_count; i++ ) {
         // Determine random residue
         double uniform_random_number = numeric::random::uniform();
@@ -96,11 +104,32 @@ int main( int argc, char ** argv ) {
         *mypose = copy_pose;
 
         // apply monte carlo
-        mc->boltzmann( *mypose );
+        bool result_mc = mc->boltzmann( *mypose );
+
+        // Collect monte carlo data
+        if ( result_mc ) {
+            // Update count of accepted poses
+            accepted_num++;
+            // Save pose score update
+            core::Real result = mc->last_accepted_score();
+            score_vec.push_back( result );
+        }
+
+        // Print results if full
+        if ( ( i % 99 == 0 ) && ( i != 0 ) ) {
+            core::Real vec_size = score_vec.size();
+            core::Real avg_score =  std::accumulate( score_vec.begin(), score_vec.end(), 0.0) / vec_size;
+            TR << "Average of score last accapted poses: " << avg_score << std::endl;
+            TR << "Out of the last 100 poses " << accepted_num << " were accepted" << std::endl;
+            score_vec.clear();
+            accepted_num = 0;
+        }
 
         // Call pymol observer
         the_observer->pymol().apply( *mypose );
     }
+
+    TR << "Number of Runs: " << accepted_num << std::endl;
 
     // Check pose
     core::Real score2 = sfxn->score( *mypose );
