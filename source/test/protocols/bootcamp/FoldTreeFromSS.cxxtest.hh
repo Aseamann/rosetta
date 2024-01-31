@@ -19,10 +19,14 @@
 #include <test/core/init_util.hh>
 
 // Utility headers
-# include <utility/vector1.hh>
+#include <utility/vector1.hh>
 
 /// Project headers
 #include <core/types.hh>
+#include <core/pose/Pose.hh>
+#include <core/kinematics/FoldTree.hh>
+#include <core/scoring/dssp/Dssp.hh>
+#include <core/kinematics/edge/Edge.hh>
 
 // C++ headers
 
@@ -60,6 +64,65 @@ identify_secondary_structure_spans( std::string const & ss_string )
       << ss_boundaries[ ii ].second << std::endl;
   }
   return ss_boundaries;
+}
+
+
+std::string
+fold_tree_from_ss( core::pose::Pose const & pose )
+{
+	// Setup DSSP Call
+	std::string dssp_str = core::scoring::dssp::Dssp( pose ).get_dssp_secstruct();
+	core::kinematics::FoldTreeOP ft_dssp = from_tree_from_dssp( dssp_str );
+
+	return result;
+}
+
+core::kinematics::FoldTreeOP
+from_tree_from_dssp( std::string const & dssp_string )
+{
+	// Setup FoldTree
+	core::kinematics::FoldTreeOP ft( new core::kinematics::FoldTree() );
+	
+	// Send string to identify_secondary_structure_spans
+	utility::vector1< std::pair< core::Size, core::Size > > ss_boundaries = identify_secondary_structure_spans( dssp_string );
+
+	// Loop over pairs and add to fold tree
+	utility::vector1< core:Size > mid_points;
+	for ( core::Size ii = 1; ii <= ss_boundaries.size(); ++ii ) {
+		// Get start and end of ss element
+		core::Size start = ss_boundaries[ ii ].first;
+		core::Size end = ss_boundaries[ ii ].second;
+		core::Size mid = ( end - start ) / 2;
+		// Add mid point to fold tree
+		mid_points.push_back( mid );
+	}
+
+	// Build fold tree, starting at position 1 and to each mid point
+	core::Size jump = 1;
+	for ( core::Size ii = 1; ii <= mid_points.size(); ++ii ) {
+		if ( ii == 1 ) {
+			// Add edge from 1 to first mid point
+			ft->add_edge( 1, mid_points[ ii ], core::kinematics::Edge::PEPTIDE );
+		} else {
+			// Add in first jump, but fill in the remainder of peptide edges
+			ft->add_edge( mid_points[ ii ], mid_points[ ii ], jump++ );
+			if ( jump == 1 ) {
+				// Only need to fill in downstream peptide edges
+				ft->add_edge( mid_points[ ii ], ss_boundaries[ jump ].second, core::kinematics::Edge::PEPTIDE );
+			} else {
+				// Need to fill in both upstream and downstream peptide edges
+				ft->add_edge( ss_boundaries[ jump + 1 ].first, mid_points[ ii ], core::kinematics::Edge::PEPTIDE );
+				ft->add_edge( mid_points[ ii ], ss_boundaries[ jump ].second, core::kinematics::Edge::PEPTIDE );
+			}
+		}
+		// After performing jumps, fill in upstream and downstream of last jump
+		if ( ii == mid_points.size() ) {
+			ft->add_edge( ss_boundaries[ ii + 1 ].first, mid_points[ ii ], core::kinematics::Edge::PEPTIDE );
+			ft->add_edge( mid_points[ ii ], ss_boundaries[ ii ].second, core::kinematics::Edge::PEPTIDE );
+		}
+	}
+
+	return ft;
 }
 
 
