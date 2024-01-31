@@ -81,6 +81,7 @@ sources = {
 
 	"bootcamp" : [
 		"QueueTests",
+		"FoldTreeFromSS",
 	],
 
 	"branch_angle" : [
