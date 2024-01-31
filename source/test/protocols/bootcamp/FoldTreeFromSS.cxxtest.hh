@@ -293,4 +293,21 @@ public:
 		TS_ASSERT_EQUALS( ft->size(), 38 );
 	}
 
+	// Test to perform running on test_in.pdb
+	void test_fold_tree_from_dssp_on_test_in_pdb() {
+		// Setup pose
+		core::pose::Pose pose;
+		pose = create_test_in_pdb_pose();
+
+		// Setup string
+		std::string ss_string = core::scoring::dssp::Dssp( pose ).get_dssp_secstruct();
+
+		// Setup fold tree
+		core::kinematics::FoldTreeOP ft = fold_tree_from_dssp_string( ss_string );
+
+		// Check fold tree
+		bool ft_check = ft->check_fold_tree();
+
+	}
+
 };
