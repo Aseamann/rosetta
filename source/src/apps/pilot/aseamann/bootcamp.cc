@@ -35,6 +35,7 @@
 # include <protocols/bootcamp/fold_tree_from_ss.hh>  // for fold_tree_from_ss
 # include <core/pose/variant_util.hh>  // setup cutpoints
 # include <core/scoring/ScoreTypes.hh>  // for setting weight
+# include <protocols/jd2/JobDistributor.hh>  // for setting jd2
 
 // Setup tracer cout
 static basic::Tracer TR( "apps.pilot.aseamann" );
@@ -54,6 +55,8 @@ int main( int argc, char ** argv ) {
 
     protocols::bootcamp::BootCampMoverOP bootcamp_mover( new protocols::bootcamp::BootCampMover );
     bootcamp_mover->apply( *mypose );
+
+    protocols::jd2::JobDistributor::get_instance()->go(bootcamp_mover);
 
     return 0;
 }

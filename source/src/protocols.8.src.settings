@@ -17,6 +17,10 @@ sources = {
 		"register3",
 		"register4",
 	],
+	"protocols/bootcamp": [
+		"fold_tree_from_ss",
+		"BootCampMover",
+	],
 }
 include_path = [
 ]

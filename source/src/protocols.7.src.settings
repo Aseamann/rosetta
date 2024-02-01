@@ -165,9 +165,6 @@ sources = {
                 "EsmPerplexityTensorflowProtocol",
                 "PerResidueEsmProbabilitiesMetric",
         ],
-	"protocols/bootcamp": [
-		"fold_tree_from_ss",
-	],
 	"protocols/glycan_docking": [
 		"GlycanDockProtocol",
 		"util",
