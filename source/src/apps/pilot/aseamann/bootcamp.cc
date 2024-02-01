@@ -32,6 +32,9 @@
 # include <core/kinematics/MoveMap.hh> // for minimizing
 # include <core/optimization/AtomTreeMinimizer.hh> // for minimizing
 # include <core/optimization/MinimizerOptions.hh> // for minimizing
+# include <protocols/bootcamp/fold_tree_from_ss.hh>  // for fold_tree_from_ss
+# include <core/pose/variant_util.hh>  // setup cutpoints
+# include <core/scoring/ScoreTypes.hh>  // for setting weight
 
 // Setup tracer cout
 static basic::Tracer TR( "apps.pilot.aseamann" );
@@ -51,8 +54,18 @@ int main( int argc, char ** argv ) {
     // Collect length of residues
     int N = mypose->size();
 
+    // Setup fold tree from secondary structure
+    core::kinematics::FoldTreeOP ftree = protocols::bootcamp::fold_tree_from_ss( *mypose );
+    mypose->fold_tree( *ftree );
+
     // Set score funciton
+    core::Size linear_chainbreak = 1;
+    // Add cutpoint residues to pose
+    mypose->add_variant_type_to_pose_residue( *mypose );
     core::scoring::ScoreFunctionOP sfxn = core::scoring::get_score_function();
+    // Set weight for linear chainbreak
+    core::scoring::ScoreType linear_chainbreak_score = core::scoring::linear_chainbreak;
+    sfxn.set_weight(linear_chainbreak_score, 1)
     core::Real score = sfxn->score( *mypose );
 
     // Print score
@@ -128,8 +141,6 @@ int main( int argc, char ** argv ) {
         // Call pymol observer
         the_observer->pymol().apply( *mypose );
     }
-
-    TR << "Number of Runs: " << accepted_num << std::endl;
 
     // Check pose
     core::Real score2 = sfxn->score( *mypose );
